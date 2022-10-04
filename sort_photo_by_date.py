@@ -6,9 +6,14 @@ import glob
 import subprocess
 import os
 from time import gmtime, strftime
+import xml.etree.ElementTree as ET
 
-SOURCE_DIR = "./source/*"
-DEST_DIR = "./dest/"
+#SOURCE_DIR = "./source/*"
+#SOURCE_DIR = "/home/guangyi/Pictures/DCIM/158APPLE/*"
+SOURCE_DIR = "/media/share/photo/macExport/2013/*"
+#SOURCE_DIR = "/media/share/photo/AllPictures/jazz-1/*"
+#DEST_DIR = "./dest/"
+DEST_DIR = "/media/share/photo"
 DATE_TAKEN_TAG = 'EXIF DateTimeOriginal'
 
 def get_photo_taken_date(input_stream: typing.BinaryIO) -> str:
@@ -17,10 +22,6 @@ def get_photo_taken_date(input_stream: typing.BinaryIO) -> str:
     if dateTaken is None:
         dateTaken = tags.get("Image DateTime")
     if dateTaken is None:
-        if tags is None:
-            return None
-        #for k in tags:
-        #    print (f"key = {k} values = {tags[k]}")
         return None
 
     return str(dateTaken)
@@ -41,31 +42,39 @@ def get_from_modified_time(file_name: str) -> str:
     take_date = gmtime(os.path.getmtime(file_name))
     return strftime("%Y-%m-%d", take_date)
 
+def get_from_xmp(file_name: str) -> str:
+    ns = "http://ns.adobe.com/photoshop/1.0/"
+    root = ET.parse(file_name)
+    date_created = root.findall('.//{'+ns+'}DateCreated')
+    return date_created[0].text
+    
+    
+
 def main():
     
     file_list = glob.glob(SOURCE_DIR)
-    #print(SOURCE_DIR)
-    #print(file_list)
     for file_name in file_list:
+        if os.path.isdir(file_name):
+            continue
         date_extracted = None
         try:
             if file_name[-3:].upper() == "JPG":
                 date_extracted = getfile(file_name)
             elif file_name[-4:] == "HEIC":
                 date_extracted = getfile_heic(file_name)
-            if date_extracted is None:
+            elif file_name[-3:] == "xmp":
+                date_extracted = get_from_xmp(file_name)
+            if (date_extracted is None) or (date_extracted[0:4] < "1900"):
                 date_extracted = get_from_modified_time(file_name)
-                print(date_extracted)
         except Exception as e:
             print(f"not able to find taken time {file_name} becase of {e}")
             continue
         
         year = date_extracted[0:4]
         month = date_extracted[5:7]
-        #day = date_extracted[8:10]
         dest_filename = f"{DEST_DIR}/{year}/{month}"
         print(f"{file_name} should go to {dest_filename}")
-        subprocess.run(["rsync","-tuv","--remove-source-files", file_name, dest_filename])
+        #subprocess.run(["rsync","-tuv","--remove-source-files", file_name, dest_filename])
 
 if __name__ == "__main__":
     main()
