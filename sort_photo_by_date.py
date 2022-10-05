@@ -8,12 +8,9 @@ import os
 from time import gmtime, strftime
 import xml.etree.ElementTree as ET
 
-#SOURCE_DIR = "./source/*"
-#SOURCE_DIR = "/home/guangyi/Pictures/DCIM/158APPLE/*"
-SOURCE_DIR = "/media/share/photo/macExport/2013/*"
-#SOURCE_DIR = "/media/share/photo/AllPictures/jazz-1/*"
-#DEST_DIR = "./dest/"
-DEST_DIR = "/media/share/photo"
+SOURCE_DIR = "./source/*"
+DEST_DIR = "./dest/"
+
 DATE_TAKEN_TAG = 'EXIF DateTimeOriginal'
 
 def get_photo_taken_date(input_stream: typing.BinaryIO) -> str:
